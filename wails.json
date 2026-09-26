@@ -1,0 +1,12 @@
+{
+  "$schema": "https://wails.io/schema.json",
+  "name": "password-vault",
+  "outputfilename": "password-vault",
+  "frontend:install": "",
+  "frontend:build": "",
+  "frontend:dev:watcher": "",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "password-vault"
+  }
+}
