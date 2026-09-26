@@ -1,5 +1,0 @@
-* text=auto
-
-# 源码与文档统一使用 LF 换行
-*.go text eol=lf
-*.md text eol=lf
