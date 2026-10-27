@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>密码保险箱-项目架构总览</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234E85F0'/%3E%3Ctext x='16' y='22' font-size='17' font-weight='700' fill='%23fff' text-anchor='middle' font-family='sans-serif'%3E密%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --blue:#4E85F0; --blue-d:#3B72DD; --blue-w:#EEF3FE;
+  --bg:#F6F7F9; --card:#FFFFFF; --line:#E5E8EC;
+  --ink:#1F2329; --ink2:#646A73; --ink3:#9AA1AB;
+  --red:#D54941; --red-w:#FFF7F6; --green:#2E8B57; --green-w:#F0F7F2;
+  --amber:#B7791F; --amber-w:#FBF6EA;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:auto;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Segoe UI","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  font-size:14px; line-height:1.6; padding:32px 20px 48px;
+}
+.wrap{max-width:1080px;margin:0 auto;}
+/* 头部 */
+.hero{padding:6px 2px 20px;}
+.hero h1{font-size:26px;font-weight:600;letter-spacing:.5px;}
+.hero .sub{color:var(--ink2);font-size:14px;margin-top:6px;}
+.hero .meta{color:var(--ink3);font-size:12px;margin-top:10px;}
+.hero .badges{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;}
+.badge{font-size:12px;color:var(--blue-d);background:var(--blue-w);border:1px solid #D6E4FD;border-radius:20px;padding:3px 12px;}
+.badge.gray{color:var(--ink2);background:#F0F1F3;border-color:#E3E6EA;}
+.badge.green{color:#1F7A4D;background:var(--green-w);border-color:#CDE8D6;}
+/* 图块 */
+.blk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px 22px;margin-top:18px;box-shadow:0 1px 2px rgba(31,35,41,.04);}
+.blk-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;}
+.blk-num{font-size:12px;font-weight:600;color:var(--blue);background:var(--blue-w);border-radius:6px;padding:2px 8px;}
+.blk-title{font-size:17px;font-weight:600;}
+.blk-desc{font-size:12.5px;color:var(--ink2);margin-top:2px;}
+/* 分层架构 */
+.layer{border:1px solid var(--line);border-radius:10px;margin-top:10px;overflow:hidden;background:#FCFCFD;}
+.layer:first-of-type{margin-top:0;}
+.layer-head{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#F7F9FC;border-bottom:1px solid var(--line);}
+.layer-tag{font-size:12.5px;font-weight:600;color:#fff;background:var(--blue);border-radius:6px;padding:2px 10px;white-space:nowrap;}
+.layer-tag.l2{background:#5B8DEF;}
+.layer-tag.l3{background:#6E9BF2;}
+.layer-tag.l4{background:#86AAF5;}
+.layer-tag.l5{background:#A3BFF7;color:#24427F;}
+.layer-name{font-size:13.5px;font-weight:600;}
+.layer-path{font-size:12px;color:var(--ink3);margin-left:auto;font-family:Consolas,monospace;}
+.layer-body{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;}
+.comp{font-size:12.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:7px;padding:4px 10px;}
+.comp b{color:var(--blue-d);font-weight:600;}
+.comp .d{color:var(--ink3);font-size:11.5px;display:block;}
+.arrow-down{text-align:center;color:var(--blue);font-size:13px;line-height:1;padding:4px 0;}
+/* 加密流程条 */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin-top:10px;}
+.step{flex:1 1 150px;min-width:150px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#FCFCFD;position:relative;}
+.step .k{font-size:11.5px;color:var(--ink3);display:block;margin-bottom:2px;}
+.step .v{font-size:13px;font-weight:600;color:var(--ink);}
+.step .n{font-size:11.5px;color:var(--ink2);display:block;margin-top:3px;}
+.step.hl{border-color:#BFD4FB;background:var(--blue-w);}
+.step.hl .v{color:var(--blue-d);}
+.step.sec{border-color:#E4CF9F;background:var(--amber-w);}
+.step.sec .v{color:var(--amber);}
+.fa{display:flex;align-items:center;color:var(--blue);font-weight:700;font-size:15px;padding:0 1px;}
+.fa.small{font-size:12px;color:var(--ink3);}
+.note{font-size:12.5px;color:var(--ink2);background:#F7F9FC;border:1px dashed #D8DEE6;border-radius:8px;padding:8px 12px;margin-top:12px;}
+.note b{color:var(--ink);}
+/* 业务流 */
+.bflow{margin-top:12px;}
+.bflow-item{border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-top:8px;background:#FCFCFD;}
+.bflow-item:first-of-type{margin-top:0;}
+.bflow-name{font-size:12.5px;font-weight:600;color:var(--ink2);width:86px;flex:none;}
+.bflow-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.bflow-row .fa{font-size:12px;}
+.bstep{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:nowrap;}
+.bstep.act{border-color:#BFD4FB;background:var(--blue-w);color:var(--blue-d);font-weight:600;}
+.bstep.risk{border-color:#F3CDC8;background:var(--red-w);color:var(--red);}
+.bstep.ok{border-color:#CDE8D6;background:var(--green-w);color:#1F7A4D;}
+/* 合规表 */
+table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:10px;font-size:13px;}
+th{background:#F7F9FC;color:var(--ink2);font-weight:600;text-align:left;padding:8px 10px;border:1px solid var(--line);font-size:12.5px;}
+td{padding:8px 10px;border:1px solid var(--line);color:var(--ink);vertical-align:top;}
+td.mono{font-family:Consolas,monospace;font-size:12px;color:var(--blue-d);}
+tr:nth-child(even) td{background:#FBFCFD;}
+/* 图例与底部 */
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;font-size:12.5px;color:var(--ink2);}
+.legend .it{display:flex;align-items:center;gap:6px;}
+.dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+.dot.blue{background:var(--blue);} .dot.bluew{background:var(--blue-w);border:1px solid #BFD4FB;}
+.dot.red{background:var(--red);} .dot.green{background:var(--green);} .dot.amber{background:var(--amber);}
+.foot{margin-top:20px;color:var(--ink3);font-size:12px;line-height:1.8;}
+@media (max-width:720px){
+  .layer-path{display:none;}
+  .bflow-name{width:100%;margin-bottom:4px;}
+  .step{flex:1 1 100%;}
+  .bflow-row{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>password-vault 项目架构总览</h1>
+    <div class="sub">本地单机国密密码保险箱 —— 加密存储并取回明文密码的桌面工具（Go + Wails v2）</div>
+    <div class="badges">
+      <span class="badge">SM3 / SM4 国密算法</span>
+      <span class="badge">等保 2.0 控制点对齐</span>
+      <span class="badge green">GB/T 39786 密码应用自检</span>
+      <span class="badge gray">单机 · 无网络接口</span>
+    </div>
+    <div class="meta">版本 v1.3.0（Wails 版） · 架构图生成于 2026-09 · 配套文档：docs/design.md · docs/compliance-report.md</div>
+  </div>
+
+  <!-- ===== 01 系统分层架构 ===== -->
+  <div class="blk">
+    <div class="blk-head"><span class="blk-num">01</span><div><div class="blk-title">系统分层架构</div><div class="blk-desc">自顶向下五层：界面 → 绑定 → 服务 → 加密与存储核心 → 磁盘。箭头表示调用/数据方向。</div></div></div>
+
+    <div class="layer">
+      <div class="layer-head"><span class="layer-tag">L1 前端</span><span class="layer-name">界面层（系统 WebView 内）</span><span class="layer-path">frontend/</span></div>
+      <div class="layer-body">
+        <span class="comp"><b>解锁 / 创建屏</b><span class="d">主密码输入、强度校验、失败退避倒计时</span></span>
+        <span class="comp"><b>主界面</b><span class="d">左侧列表 + 右侧详情，搜索过滤（含回收站视图）</span></span>
+        <span class="comp"><b>添加 / 编辑弹窗</b><span class="d">标题 / 账号 / 密码 / 地址 / 端口 / 备注</span></span>
+        <span class="comp"><b>设置弹窗</b><span class="d">修改主密码（验旧设新）</span></span>
+        <span class="comp"><b>自绘标题栏</b><span class="d">无边框窗口：拖动 / 最小化 / 最大化 / 关闭</span></span>
+        <span class="comp"><b>纯 HTML/CSS/JS</b><span class="d">无框架，设计 Token 化，样式见 docs/ui-design.md</span></span>
+      </div>
+    </div>
+    <div class="arrow-down">▼ window.go.gui.Service 方法调用</div>
+
+    <div class="layer">
+      <div class="layer-head"><span class="layer-tag l2">L2 绑定</span><span class="layer-name">Wails v2 桥接</span><span class="layer-path">main.go · wails.json</span></div>
+      <div class="layer-body">
+        <span class="comp"><b>Go 后端绑定</b><span class="d">Bind(Service) 自动生成前端调用桥（frontend/wailsjs/）</span></span>
+        <span class="comp"><b>窗口能力</b><span class="d">SetAuthWindow / SetMainWindow（登录小框 ↔ 主界面）</span></span>
+        <span class="comp"><b>构建约束</b><span class="d">-tags native_webview2loader 固定旧版加载器</span></span>
+      </div>
+    </div>
+    <div class="arrow-down">▼ 会话 / 数据读写</div>
+
+    <div class="layer">
+      <div class="layer-head"><span class="layer-tag l3">L3 服务</span><span class="layer-name">GUI 服务层（会话与安全控制）</span><span class="layer-path">internal/gui/</span></div>
+      <div class="layer-body">
+        <span class="comp"><b>会话管理</b><span class="d">解锁态、主密钥仅驻内存、Lock/clearSession 清零</span></span>
+        <span class="comp"><b>失败处理</b><span class="d">连续输错指数退避（2s→…→60s）</span></span>
+        <span class="comp"><b>审计日志</b><span class="d">JSONL 记录关键操作与结果，不含密码内容</span></span>
+        <span class="comp"><b>业务方法</b><span class="d">CreateVault / Unlock / List / AddFull / Update / Get / CopyPassword / Remove / Restore / Purge / Backup / RestoreFromBackup / ChangeMasterPassword</span></span>
+      </div>
+    </div>
+    <div class="arrow-down">▼ 密码学原语 / 策略 / 文件格式</div>
+
+    <div class="layer">
+      <div class="layer-head"><span class="layer-tag l4">L4 核心</span><span class="layer-name">加密核心 · 策略 · 存储</span><span class="layer-path">internal/crypto · policy · storage</span></div>
+      <div class="layer-body">
+        <span class="comp"><b>crypto</b><span class="d">PBKDF2-HMAC-SM3 派生（60 万次）· SM4-GCM 信封加密 · 国标测试向量</span></span>
+        <span class="comp"><b>policy</b><span class="d">主密码 ≥12 位且四类字符至少三类（GUI/CLI 共用）</span></span>
+        <span class="comp"><b>storage</b><span class="d">库文件格式（PVLT 头 + 条目区）· 加密备份（PVLB + SM3 摘要）· 密文覆盖删除</span></span>
+      </div>
+    </div>
+    <div class="arrow-down">▼ 原子读写</div>
+
+    <div class="layer">
+      <div class="layer-head"><span class="layer-tag l5">L5 磁盘</span><span class="layer-name">持久化产物（全密文）</span><span class="layer-path">%USERPROFILE%\.password-vault\</span></div>
+      <div class="layer-body">
+        <span class="comp"><b>vault.vault</b><span class="d">主库：全量 SM4-GCM 密文，密钥不落盘</span></span>
+        <span class="comp"><b>audit.log</b><span class="d">审计日志（JSONL 追加，不含凭据内容）</span></span>
+        <span class="comp"><b>备份文件</b><span class="d">password-vault-backup-&lt;时间&gt;.vault（密文副本 + SM3 校验）</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 02 加密与密钥体系 ===== -->
+  <div class="blk">
+    <div class="blk-head"><span class="blk-num">02</span><div><div class="blk-title">加密与密钥体系（核心原理）</div><div class="blk-desc">一条链完成"密码 → 密钥 → 密文"；信封加密让每条凭据独立密钥、改主密码不重加密数据。</div></div></div>
+
+    <div class="flow">
+      <div class="step"><span class="k">输入</span><span class="v">主密码</span><span class="n">用户记忆，永不落盘、不上传</span></div>
+      <div class="fa">→</div>
+      <div class="step hl"><span class="k">密钥派生 KDF</span><span class="v">PBKDF2-HMAC-SM3</span><span class="n">随机盐 16B · 迭代 60 万次 · 抗暴力破解</span></div>
+      <div class="fa">→</div>
+      <div class="step hl"><span class="k">主密钥 MK</span><span class="v">SM4 · 128 位</span><span class="n">仅存内存，锁定 / 退出即清零</span></div>
+      <div class="fa">→</div>
+      <div class="step"><span class="k">信封封装（每条独立）</span><span class="v">随机数据密钥 DK</span><span class="n">MK 用 SM4-GCM 封装 DK</span></div>
+      <div class="fa">→</div>
+      <div class="step hl"><span class="k">凭据加密</span><span class="v">SM4-GCM</span><span class="n">随机 nonce 12B · 认证标签 16B · AAD=条目 ID 防替换</span></div>
+      <div class="fa">→</div>
+      <div class="step sec"><span class="k">磁盘</span><span class="v">全量密文</span><span class="n">库文件 / 备份均为密文，篡改即校验失败</span></div>
+    </div>
+
+    <div class="note">
+      <b>为什么这样做：</b>① 主密码错误、密文被改、条目被替换都逃不过 GCM 认证，程序统一拒绝打开；② 修改主密码只需用新 MK 重新封装各 DK，凭据密文不动，秒级完成；③ 主密码丢失即数据不可恢复——这是合规安全设计的必然结果，无后门。
+    </div>
+  </div>
+
+  <!-- ===== 03 关键业务流 ===== -->
+  <div class="blk">
+    <div class="blk-head"><span class="blk-num">03</span><div><div class="blk-title">关键业务流</div><div class="blk-desc">五条核心链路，从用户操作到磁盘落盘。蓝=关键动作，红=危险/确认动作，绿=恢复/成功。</div></div></div>
+
+    <div class="bflow">
+      <div class="bflow-item">
+        <div class="bflow-row"><span class="bflow-name">创建保险箱</span><span class="bstep act">设置主密码（≥12 位·三类字符）</span><span class="fa">→</span><span class="bstep act">生成随机盐</span><span class="fa">→</span><span class="bstep act">派生主密钥 MK</span><span class="fa">→</span><span class="bstep">写入空库文件（PVLT 头）</span><span class="fa">→</span><span class="bstep ok">解锁进入主界面</span></div>
+      </div>
+      <div class="bflow-item">
+        <div class="bflow-row"><span class="bflow-name">解锁</span><span class="bstep act">输入主密码</span><span class="fa">→</span><span class="bstep act">按库头盐/迭代派生 MK</span><span class="fa">→</span><span class="bstep act">解封 DK 并解密条目（GCM 校验）</span><span class="fa">→</span><span class="bstep ok">载入凭据列表</span><span class="bstep risk">失败：指数退避 2s→60s</span></div>
+      </div>
+      <div class="bflow-item">
+        <div class="bflow-row"><span class="bflow-name">新增 / 编辑凭据</span><span class="bstep act">填 标题/账号/密码/地址/端口/备注</span><span class="fa">→</span><span class="bstep act">随机 DK + SM4-GCM 加密（AAD=条目ID）</span><span class="fa">→</span><span class="bstep">追加/替换条目</span><span class="fa">→</span><span class="bstep">原子写回库文件</span></div>
+      </div>
+      <div class="bflow-item">
+        <div class="bflow-row"><span class="bflow-name">删除（两级）</span><span class="bstep">删除 = 移入回收站（软删，可恢复）</span><span class="fa">→</span><span class="bstep risk">彻底删除（二次确认）</span><span class="fa">→</span><span class="bstep risk">随机数据覆盖旧密文区</span><span class="fa">→</span><span class="bstep">原子重写（剩余信息保护）</span></div>
+      </div>
+      <div class="bflow-item">
+        <div class="bflow-row"><span class="bflow-name">备份 / 恢复</span><span class="bstep act">备份：库整体密文副本</span><span class="fa">→</span><span class="bstep act">封装 PVLB 信封 + SM3 摘要</span><span class="fa">→</span><span class="bstep">恢复：先验魔数/版本/摘要/库格式</span><span class="fa">→</span><span class="bstep ok">全部通过才原子替换</span><span class="fa">→</span><span class="bstep risk">任一失败即中止，不触碰当前库</span></div>
+      </div>
+      <div class="bflow-item">
+        <div class="bflow-row"><span class="bflow-name">修改主密码</span><span class="bstep act">验旧密码</span><span class="fa">→</span><span class="bstep act">新盐 + 派生新 MK</span><span class="fa">→</span><span class="bstep act">用新 MK 重新封装各条 DK</span><span class="fa">→</span><span class="bstep">原子写回（凭据密文不动）</span><span class="fa">→</span><span class="bstep ok">完成，旧密钥清零</span></div>
+      </div>
+      <div class="bflow-item">
+        <div class="bflow-row"><span class="bflow-name">锁定 / 自动锁定</span><span class="bstep act">手动锁定 或 闲置 5 分钟</span><span class="fa">→</span><span class="bstep act">清空内存密钥与明文</span><span class="fa">→</span><span class="bstep">窗口缩回登录小框</span><span class="fa">→</span><span class="bstep">剪贴板密码 30 秒自动清空</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 04 合规映射 ===== -->
+  <div class="blk">
+    <div class="blk-head"><span class="blk-num">04</span><div><div class="blk-title">等保 2.0 / 密码法合规映射</div><div class="blk-desc">按 GB/T 22239-2019 与 GB/T 39786-2021 控制点逐项落地的实现位置（完整口径见 docs/compliance-report.md）。</div></div></div>
+    <table>
+      <colgroup><col style="width:22%"><col style="width:48%"><col style="width:30%"></colgroup>
+      <tr><th>控制点</th><th>落地措施</th><th>实现位置</th></tr>
+      <tr><td>身份鉴别（复杂度）</td><td>主密码 ≥12 位，且大写/小写/数字/符号至少三类；GUI 与 CLI 共用同一策略</td><td class="mono">internal/policy · frontend</td></tr>
+      <tr><td>身份鉴别（失败处理）</td><td>连续失败第 3 次起指数退避，上限 60 秒；退避期间拒绝一切尝试，成功即清零</td><td class="mono">internal/gui/service.go</td></tr>
+      <tr><td>身份鉴别（超时退出）</td><td>闲置 5 分钟自动锁定并缩回登录窗口</td><td class="mono">frontend/js/app.js</td></tr>
+      <tr><td>数据保密性</td><td>全库 SM4-GCM 信封加密，密钥由主密码现场派生、从不落盘</td><td class="mono">internal/crypto</td></tr>
+      <tr><td>数据完整性</td><td>GCM 认证标签（条目级 AAD 绑定）；备份文件 SM3 摘要校验</td><td class="mono">internal/crypto · storage/backup.go</td></tr>
+      <tr><td>安全审计</td><td>本地 JSONL 审计日志：解锁/增删/复制/备份/锁定等，不含密码明文与凭据内容</td><td class="mono">internal/gui/audit.go</td></tr>
+      <tr><td>备份与恢复</td><td>加密备份（密文副本 + 完整性校验）；恢复先校验后原子替换，失败不触碰当前库</td><td class="mono">internal/storage/backup.go</td></tr>
+      <tr><td>剩余信息保护</td><td>两级删除，彻底删除时随机覆盖旧密文再原子重写；内存密钥清零；剪贴板 30 秒自动清除</td><td class="mono">storage/cover.go · gui/service.go</td></tr>
+      <tr><td>密码法 / 密评</td><td>仅使用合规商用密码算法 SM3/SM4（不自研），算法实现经国标测试向量验证（GB/T 32905/32907）</td><td class="mono">internal/crypto + 测试</td></tr>
+    </table>
+  </div>
+
+  <!-- 图例与底部 -->
+  <div class="legend">
+    <span class="it"><span class="dot blue"></span>主色组件 / 关键动作</span>
+    <span class="it"><span class="dot bluew"></span>高亮步骤 / 选中态</span>
+    <span class="it"><span class="dot red"></span>危险操作 / 二次确认</span>
+    <span class="it"><span class="dot green"></span>成功 / 恢复路径</span>
+    <span class="it"><span class="dot amber"></span>磁盘密文产物</span>
+  </div>
+  <div class="foot">
+    图例说明：本图为 password-vault 项目技术原理总览，配合 docs/design.md（方案）、docs/acceptance-checklist.md（验收）、docs/compliance-report.md（密评自查）使用。<br>
+    复用提示：本文件为单文件自包含 HTML，可直接本地打开、打印为 PDF 或嵌入团队知识库；修改配色只需调整文件顶部 :root 中的颜色变量。
+  </div>
+</div>
+</body>
+</html>

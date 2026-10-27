@@ -10,6 +10,7 @@ var state = {
   selectedId: null,     // 当前选中条目 ID
   detail: null,         // 当前详情（含密码明文）
   showPass: false,      // 详情密码是否明文显示
+  collapsed: {},        // 侧边栏分组折叠状态（组名 -> true 已折叠）
   view: 'normal',       // 'normal' 正常列表 / 'trash' 回收站
   unlocked: false
 };
@@ -159,25 +160,56 @@ document.querySelectorAll('.toggle-pass').forEach(function (btn) {
   });
 });
 
-// ---------- 列表 ----------
+// ---------- 列表（分组视图，可折叠） ----------
 function renderList() {
   entryList.innerHTML = '';
+  var q = ($('search').value || '').trim();
+  var src = state.entries;
+  // 按分组归类：空分组名显示为「未分组」，组内保持原顺序（创建时间倒序）。
+  var groups = {};
+  src.forEach(function (e) {
+    var g = e.group || '';
+    (groups[g] = groups[g] || []).push(e);
+  });
+  var names = Object.keys(groups);
+  names.sort(function (a, b) { return (a === '' ? -1 : b === '' ? 1 : a < b ? -1 : 1); });
   var count = 0;
-  state.entries.forEach(function (e) {
-    count++;
-    var li = document.createElement('li');
-    li.className = 'item' + (e.id === state.selectedId ? ' sel' : '');
-    var av = document.createElement('span');
-    av.className = 'av';
-    av.textContent = (e.title || '?').charAt(0).toUpperCase();
-    var tx = document.createElement('span');
-    tx.className = 'item-text';
-    var t = document.createElement('span'); t.className = 'item-title'; t.textContent = e.title;
-    var u = document.createElement('span'); u.className = 'item-user'; u.textContent = e.address ? e.username + ' · ' + e.address : e.username;
-    tx.appendChild(t); tx.appendChild(u);
-    li.appendChild(av); li.appendChild(tx);
-    li.addEventListener('click', function () { selectEntry(e.id); });
-    entryList.appendChild(li);
+  names.forEach(function (g) {
+    var list = groups[g];
+    count += list.length;
+    var forceOpen = q !== ''; // 搜索时强制展开，便于定位结果
+    var collapsed = !forceOpen && !!state.collapsed[g];
+    var wrap = document.createElement('div');
+    wrap.className = 'group' + (collapsed ? ' closed' : ' open');
+    var head = document.createElement('div');
+    head.className = 'group-head';
+    var arrow = document.createElement('span'); arrow.className = 'group-arrow'; arrow.textContent = '▶';
+    var name = document.createElement('span'); name.className = 'group-name'; name.textContent = g === '' ? '未分组' : g;
+    var c = document.createElement('span'); c.className = 'group-count'; c.textContent = list.length;
+    head.appendChild(arrow); head.appendChild(name); head.appendChild(c);
+    head.addEventListener('click', function () {
+      if (q !== '') return; // 搜索态不允许折叠
+      if (state.collapsed[g]) delete state.collapsed[g]; else state.collapsed[g] = true;
+      renderList();
+    });
+    var ul = document.createElement('ul'); ul.className = 'group-items';
+    list.forEach(function (e) {
+      var li = document.createElement('li');
+      li.className = 'item' + (e.id === state.selectedId ? ' sel' : '');
+      var av = document.createElement('span');
+      av.className = 'av';
+      av.textContent = (e.title || '?').charAt(0).toUpperCase();
+      var tx = document.createElement('span');
+      tx.className = 'item-text';
+      var t = document.createElement('span'); t.className = 'item-title'; t.textContent = e.title;
+      var u = document.createElement('span'); u.className = 'item-user'; u.textContent = e.address ? e.username + ' · ' + e.address : e.username;
+      tx.appendChild(t); tx.appendChild(u);
+      li.appendChild(av); li.appendChild(tx);
+      li.addEventListener('click', function () { selectEntry(e.id); });
+      ul.appendChild(li);
+    });
+    wrap.appendChild(head); wrap.appendChild(ul);
+    entryList.appendChild(wrap);
   });
   $('entry-count').textContent = '共 ' + count + ' 条凭据';
 }
@@ -209,6 +241,8 @@ function renderDetail() {
   detailBody.classList.remove('hidden');
   $('d-title').textContent = d.title;
   $('d-username').textContent = d.username;
+  $('d-field-group').classList.toggle('hidden', !d.group);
+  if (d.group) $('d-group').textContent = d.group;
   $('d-field-address').classList.toggle('hidden', !d.address);
   if (d.address) $('d-address').textContent = d.address;
   $('d-field-port').classList.toggle('hidden', !d.port);
@@ -240,6 +274,15 @@ $('d-copy').addEventListener('click', function () {
   if (!state.detail) return;
   api.CopyPassword(state.detail.id).then(function () {
     toast('密码已复制，30 秒后自动清空剪贴板');
+  }).catch(function (e) { toast('复制失败：' + errMsg(e)); });
+});
+
+// 详情字段复制（账号/分组/地址/端口/备注），复用后端 30 秒自动清空链路。
+document.addEventListener('click', function (ev) {
+  var btn = ev.target.closest('.copy-btn');
+  if (!btn || !state.detail) return;
+  api.CopyField(state.detail.id, btn.dataset.field).then(function () {
+    toast('已复制，30 秒后自动清空剪贴板');
   }).catch(function (e) { toast('复制失败：' + errMsg(e)); });
 });
 
@@ -370,6 +413,18 @@ $('search').addEventListener('compositionend', function () { searchComposing = f
 $('search').addEventListener('input', function () { if (!searchComposing) doSearch(this.value); });
 
 // ---------- 新增弹窗 ----------
+// refreshGroupList 把现有分组填入输入框候选（datalist），可点选也可输入新分组名。
+function refreshGroupList() {
+  var seen = {};
+  state.allEntries.forEach(function (e) { if (!e.deleted && e.group) seen[e.group] = true; });
+  var dl = $('group-list');
+  dl.innerHTML = '';
+  Object.keys(seen).sort().forEach(function (n) {
+    var o = document.createElement('option');
+    o.value = n;
+    dl.appendChild(o);
+  });
+}
 function openModal(entry) {
   state.editingId = entry ? entry.id : null;
   $('add-head').childNodes[0].nodeValue = entry ? '编辑凭据' : '添加凭据';
@@ -378,14 +433,16 @@ function openModal(entry) {
   $('add-address').value = entry ? (entry.address || '') : '';
   $('add-port').value = entry && entry.port ? String(entry.port) : '';
   $('add-note').value = entry ? (entry.note || '') : '';
+  $('add-group').value = entry ? (entry.group || '') : '';
   $('add-password').value = '';
+  refreshGroupList();
   $('modal-add').classList.remove('hidden');
   $('add-title').focus();
 }
 function closeModal() {
   state.editingId = null;
   $('modal-add').classList.add('hidden');
-  ['add-title', 'add-username', 'add-address', 'add-port', 'add-note', 'add-password'].forEach(function (id) { $(id).value = ''; });
+  ['add-title', 'add-username', 'add-address', 'add-port', 'add-note', 'add-group', 'add-password'].forEach(function (id) { $(id).value = ''; });
 }
 $('btn-add').addEventListener('click', function () { openModal(); });
 $('add-close').addEventListener('click', closeModal);
@@ -393,7 +450,7 @@ $('add-cancel').addEventListener('click', closeModal);
 $('modal-add').addEventListener('click', function (ev) { if (ev.target === this) closeModal(); });
 
 $('add-save').addEventListener('click', saveEntry);
-['add-title', 'add-username', 'add-address', 'add-port', 'add-note', 'add-password'].forEach(function (id) {
+['add-title', 'add-username', 'add-address', 'add-port', 'add-note', 'add-group', 'add-password'].forEach(function (id) {
   $(id).addEventListener('keydown', function (ev) { if (ev.key === 'Enter') saveEntry(); });
 });
 
@@ -403,6 +460,7 @@ function saveEntry() {
       address = $('add-address').value.trim(),
       portText = $('add-port').value.trim(),
       note = $('add-note').value.trim(),
+      group = $('add-group').value.trim(),
       password = $('add-password').value;
   if (!title || !username || !password) { toast('标题、账号、密码均不能为空'); return; }
   var port = 0;
@@ -412,8 +470,8 @@ function saveEntry() {
     if (port > 65535) { toast('端口需为 0–65535 的数字'); return; }
   }
   var req = state.editingId
-    ? api.Update(state.editingId, title, username, password, address, port, note)
-    : api.AddFull(title, username, password, address, port, note);
+    ? api.Update(state.editingId, title, username, password, address, port, note, group)
+    : api.AddFull(title, username, password, address, port, note, group);
   req.then(function (view) {
     var editing = state.editingId != null;
     closeModal();
@@ -446,6 +504,7 @@ function lockNow(msg) {
   state.allEntries = [];
   state.selectedId = null;
   state.detail = null;
+  state.collapsed = {};
   state.view = 'normal';
   $('btn-trash').classList.remove('on');
   $('trash-count').textContent = '';

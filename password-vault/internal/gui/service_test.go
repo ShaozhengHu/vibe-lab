@@ -112,13 +112,16 @@ func TestAddFullUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// AddFull：完整字段写入。
-	v, err := s.AddFull("生产数据库", "dbadmin", "P@ssw0rd#2026", "192.168.1.10", 3306, "生产环境")
+	// AddFull：完整字段（含分组）写入。
+	v, err := s.AddFull("生产数据库", "dbadmin", "P@ssw0rd#2026", "192.168.1.10", 3306, "生产环境", "生产")
 	if err != nil {
 		t.Fatalf("AddFull 失败: %v", err)
 	}
 	if v.Address != "192.168.1.10" {
 		t.Fatalf("列表地址不一致: %+v", v)
+	}
+	if v.Group != "生产" {
+		t.Fatalf("列表分组不一致: %+v", v)
 	}
 
 	d, err := s.Get(v.ID)
@@ -128,9 +131,12 @@ func TestAddFullUpdate(t *testing.T) {
 	if d.Address != "192.168.1.10" || d.Port != 3306 || d.Note != "生产环境" {
 		t.Fatalf("详情字段不一致: %+v", d)
 	}
+	if d.Group != "生产" {
+		t.Fatalf("详情分组不一致: %+v", d)
+	}
 
-	// Update：修改地址/端口/备注与密码，创建时间保持。
-	u, err := s.Update(v.ID, "生产数据库", "dbadmin", "New@Passw0rd", "10.0.0.5", 3307, "迁移至新网段")
+	// Update：修改地址/端口/备注/分组与密码，创建时间保持。
+	u, err := s.Update(v.ID, "生产数据库", "dbadmin", "New@Passw0rd", "10.0.0.5", 3307, "迁移至新网段", "测试")
 	if err != nil {
 		t.Fatalf("Update 失败: %v", err)
 	}
@@ -141,16 +147,53 @@ func TestAddFullUpdate(t *testing.T) {
 	if d2.Address != "10.0.0.5" || d2.Port != 3307 || d2.Note != "迁移至新网段" || d2.Password != "New@Passw0rd" {
 		t.Fatalf("更新后详情不正确: %+v", d2)
 	}
+	if d2.Group != "测试" {
+		t.Fatalf("更新后分组不正确: %+v", d2)
+	}
 	if d2.CreatedAt != d.CreatedAt {
 		t.Fatalf("更新不应改变创建时间: %d vs %d", d2.CreatedAt, d.CreatedAt)
 	}
 
+	// CopyField：非密码字段复制（复用 30 秒清空剪贴板链路）。
+	s2, copied := newTestService(t)
+	if err := s2.CreateVault("正确主密码Abc123!"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s2.Unlock("正确主密码Abc123!"); err != nil {
+		t.Fatal(err)
+	}
+	cv, err := s2.AddFull("生产数据库", "dbadmin", "P@ssw0rd#2026", "192.168.1.10", 3306, "生产环境", "生产")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s2.CopyField(cv.ID, "address"); err != nil {
+		t.Fatalf("复制地址失败: %v", err)
+	}
+	if (*copied)[len(*copied)-1] != "192.168.1.10" {
+		t.Fatalf("复制地址内容不正确: %v", *copied)
+	}
+	if err := s2.CopyField(cv.ID, "port"); err != nil {
+		t.Fatalf("复制端口失败: %v", err)
+	}
+	if (*copied)[len(*copied)-1] != "3306" {
+		t.Fatalf("复制端口内容不正确: %v", *copied)
+	}
+	if err := s2.CopyField(cv.ID, "note"); err != nil {
+		t.Fatalf("复制备注失败: %v", err)
+	}
+	if err := s2.CopyField(cv.ID, "unknown"); err == nil {
+		t.Fatal("未知字段必须报错")
+	}
+	if err := s2.CopyField(cv.ID, "port"); err != nil { // 第二次触发：确保幂等可用
+		t.Fatalf("重复复制端口失败: %v", err)
+	}
+
 	// 未知 ID 更新必须报错。
-	if _, err := s.Update("zzzz", "t", "u", "p@A1", "", 0, ""); err == nil {
+	if _, err := s.Update("zzzz", "t", "u", "p@A1", "", 0, "", ""); err == nil {
 		t.Fatal("未知 ID 更新必须报错")
 	}
 
-	// 旧库兼容：三参 Add 产生的条目扩展字段为空。
+	// 旧库兼容：三参 Add 产生的条目扩展字段为空（含分组）。
 	v2, err := s.Add("VPN网关", "vpn", "Vpn@2026")
 	if err != nil {
 		t.Fatal(err)
@@ -159,7 +202,7 @@ func TestAddFullUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if d3.Address != "" || d3.Port != 0 || d3.Note != "" {
+	if d3.Address != "" || d3.Port != 0 || d3.Note != "" || d3.Group != "" {
 		t.Fatalf("三参 Add 的扩展字段应为空: %+v", d3)
 	}
 }
@@ -175,7 +218,7 @@ func TestChangeMasterPassword(t *testing.T) {
 	if _, err := s.Unlock("OldPassw0rd!234"); err != nil {
 		t.Fatal(err)
 	}
-	v, err := s.AddFull("生产数据库", "dbadmin", "P@ssw0rd#2026", "192.168.1.10", 3306, "生产环境")
+	v, err := s.AddFull("生产数据库", "dbadmin", "P@ssw0rd#2026", "192.168.1.10", 3306, "生产环境", "生产")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -301,10 +344,10 @@ func TestTrashFlow(t *testing.T) {
 func TestCreateVaultPasswordPolicy(t *testing.T) {
 	s, _ := newTestService(t)
 	for _, weak := range []string{
-		"abcdefghijkl",   // 仅小写
-		"ABCDEFGHIJKL",   // 仅大写
-		"123456789012",   // 仅数字
-		"abcdefgh12345",  // 小写+数字两类
+		"abcdefghijkl", // 仅小写
+		"ABCDEFGHIJKL", // 仅大写
+		"123456789012", // 仅数字
+		"abcdefgh12345", // 小写+数字两类
 	} {
 		if err := s.CreateVault(weak); err == nil {
 			t.Fatalf("弱主密码必须被拒绝: %q", weak)

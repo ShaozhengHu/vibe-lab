@@ -15,6 +15,9 @@
 # 打包产物（release 目录不入库，由 scripts/package.ps1 重新生成）
 /release/
 
+# 前端自检截图产物（页面验证用，非交付资产）
+docs/_shots/
+
 # IDE 与系统文件
 .idea/
 .vscode/

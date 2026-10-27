@@ -87,7 +87,7 @@ body { display: flex; flex-direction: column; }
 }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-.btn.primary { background: var(--primary); color: #fff; }
+.btn.primary { background: linear-gradient(180deg, #5590F2, #3B72DD); color: #fff; }
 .btn.primary:hover { background: var(--primary-hover); }
 .btn.ghost {
   background: var(--bg-panel);
@@ -111,7 +111,7 @@ body { display: flex; flex-direction: column; }
   outline: none;
   transition: border-color 0.12s;
 }
-.inp:focus { border-color: var(--primary); }
+.inp:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(78, 133, 240, 0.14); }
 .inp::placeholder { color: var(--text-weak); }
 
 .lab { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; display: block; }
@@ -123,36 +123,46 @@ body { display: flex; flex-direction: column; }
 /* ---------- 屏幕容器 ---------- */
 .screen { flex: 1; min-height: 0; display: flex; }
 #screen-lock {
-  align-items: center; justify-content: center;
-  /* 解锁/创建屏：浅冷灰渐变底，中央白卡浮起 */
-  background: linear-gradient(180deg, #F7F9FC 0%, #EDF1F7 100%);
+  /* 解锁/创建屏：整体即登录页——无卡片，品牌与表单直接浮在毛玻璃背景上，
+     与窗口边框保留自然间隙（微信 PC 登录界面形态）。 */
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.60) 0%, rgba(255, 255, 255, 0) 58%),
+    linear-gradient(180deg, #F0F4FA 0%, #E6ECF5 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 #screen-main { flex-direction: column; }
 
 /* ---------- 解锁屏 ---------- */
 .lock-card {
-  width: 360px;
-  background: var(--bg-card);
-  border: 1px solid #E8EBF0;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 8px 32px rgba(31, 35, 41, 0.08);
-  padding: 34px 30px 24px;
+  width: 340px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
   text-align: center;
 }
+.lock-brand { text-align: center; }
 .logo {
-  width: 52px; height: 52px;
-  border-radius: 13px;
-  background: var(--primary);
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #5590F2 0%, #3B72DD 100%);
+  box-shadow: 0 4px 12px rgba(78, 133, 240, 0.28);
   color: #fff;
-  font-size: 22px; font-weight: 700;
+  font-size: 23px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 12px;
+  margin: 0 auto 14px;
 }
-.app-title { font-size: 16px; font-weight: 600; }
-.app-sub { font-size: 12px; color: var(--text-weak); margin: 4px 0 20px; }
+.app-title { font-size: 17px; font-weight: 600; }
+.app-sub { font-size: 12px; color: var(--text-weak); margin: 5px 0 30px; }
 .lock-form { text-align: left; }
-.lock-form .btn-lg { margin-top: 14px; }
-.lock-note { font-size: 11.5px; color: var(--text-weak); margin-top: 16px; text-align: center; }
+.lock-form .btn-lg { margin-top: 16px; }
+.lock-note { font-size: 11.5px; color: var(--text-weak); margin-top: 24px; text-align: center; }
 
 /* ---------- 主界面 ---------- */
 .topbar {
@@ -179,6 +189,31 @@ body { display: flex; flex-direction: column; }
   -webkit-backdrop-filter: blur(16px);
 }
 .entry-list { list-style: none; margin-top: 10px; overflow-y: auto; flex: 1; }
+/* 侧边栏分组（文件夹式，可折叠） */
+.group { margin-bottom: 2px; }
+.group-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12.5px; font-weight: 600;
+  color: var(--text-secondary);
+  transition: background 0.12s;
+  user-select: none;
+}
+.group-head:hover { background: rgba(0, 0, 0, 0.045); }
+.group-arrow {
+  display: inline-block; width: 12px; text-align: center;
+  font-size: 11px; color: var(--text-weak);
+  transition: transform 0.12s;
+  flex: none;
+}
+.group.open .group-arrow { transform: rotate(90deg); }
+.group-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.group-count { font-size: 11px; color: var(--text-weak); font-weight: 400; }
+.group-items { list-style: none; }
+.group-items .item { padding-left: 18px; }
+.group.closed .group-items { display: none; }
 .item {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px;
@@ -234,6 +269,10 @@ body { display: flex; flex-direction: column; }
 }
 .field { margin-bottom: 14px; }
 .field-value { font-size: 14.5px; }
+.field-row { display: flex; align-items: center; gap: 10px; }
+.field-row .field-value { flex: 1; min-width: 0; }
+.btn-xs { padding: 3px 10px; font-size: 11.5px; }
+.copy-btn { flex: none; color: var(--text-secondary); }
 .password-row { display: flex; align-items: center; gap: 10px; }
 .password-row .btn { padding: 5px 12px; font-size: 12.5px; }
 .field-note { display: block; font-size: 11.5px; color: var(--text-weak); margin-top: 12px; }

@@ -9,8 +9,8 @@ import (
 // Entry 是一条凭据的明文形态，仅在解锁后的内存中存在，绝不落盘。
 // 磁盘上保存的是其 JSON 序列化经 SM4-GCM 加密后的密文（见 crypto.SealedEntry）。
 // Deleted 标记软删除（回收站）：旧库条目无此字段，读取时默认为 false，无需升级库格式。
-// Address/Port/Note 为可选补充字段（如服务器 IP、端口、备注）：旧库条目缺省为空，
-// JSON 反序列化天然兼容，无需升级库版本。
+// Address/Port/Note/Group 为可选补充字段（如服务器 IP、端口、备注、分组名）：
+// 旧库条目缺省为空，JSON 反序列化天然兼容，无需升级库版本。
 type Entry struct {
 	Title     string `json:"title"`
 	Username  string `json:"username"`
@@ -18,6 +18,7 @@ type Entry struct {
 	Address   string `json:"address,omitempty"` // 地址：IP / 域名 / URL（可选）
 	Port      int    `json:"port,omitempty"`    // 端口（可选，0 表示未填写）
 	Note      string `json:"note,omitempty"`    // 备注（可选）
+	Group     string `json:"group,omitempty"`   // 分组名（可选，空表示未分组）
 	CreatedAt int64  `json:"created_at"`        // Unix 秒
 	Internal  bool   `json:"internal,omitempty"`
 	Deleted   bool   `json:"deleted,omitempty"`

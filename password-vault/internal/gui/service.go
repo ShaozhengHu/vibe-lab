@@ -33,7 +33,7 @@ const (
 // Service 是绑定到 Wails 前端的后端服务。
 // 方法均为前端可调用（导出、可 JSON 序列化返回值）。
 type Service struct {
-	ctx  context.Context
+	ctx context.Context
 	path string
 
 	// 解锁后的内存状态；Lock 时全部清空。
@@ -279,12 +279,13 @@ func verifyMasterKey(mk []byte, v *storage.VaultFile) error {
 
 // ---------- 凭据操作 ----------
 
-// EntryView 是列表条目（不含密码明文）。Deleted 标记回收站状态。
+// EntryView 是列表条目（不含密码明文）。Deleted 标记回收站状态，Group 为分组名。
 type EntryView struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
 	Username  string `json:"username"`
 	Address   string `json:"address"`
+	Group     string `json:"group"`
 	CreatedAt int64  `json:"createdAt"`
 	Deleted   bool   `json:"deleted"`
 }
@@ -324,6 +325,7 @@ func (s *Service) listLocked(deletedOnly bool) []EntryView {
 			Title:     e.Title,
 			Username:  e.Username,
 			Address:   e.Address,
+			Group:     e.Group,
 			CreatedAt: e.CreatedAt,
 			Deleted:   e.Deleted,
 		})
@@ -333,14 +335,14 @@ func (s *Service) listLocked(deletedOnly bool) []EntryView {
 }
 
 // Add 新增一条凭据（标题/账号/密码），其余字段留空。
-// 完整字段（含地址/端口/备注）请使用 AddFull。
+// 完整字段（含地址/端口/备注/分组）请使用 AddFull。
 func (s *Service) Add(title, username, password string) (EntryView, error) {
-	return s.AddFull(title, username, password, "", 0, "")
+	return s.AddFull(title, username, password, "", 0, "", "")
 }
 
 // AddFull 新增一条凭据并写回库文件。address（IP/域名/URL）、port（端口）、
-// note（备注）均为可选字段，留空不影响保存。
-func (s *Service) AddFull(title, username, password, address string, port int, note string) (view EntryView, err error) {
+// note（备注）、group（分组名）均为可选字段，留空不影响保存。
+func (s *Service) AddFull(title, username, password, address string, port int, note, group string) (view EntryView, err error) {
 	defer func() {
 		if err != nil {
 			s.audit.Log("新增凭据", "失败")
@@ -358,6 +360,7 @@ func (s *Service) AddFull(title, username, password, address string, port int, n
 	e.Address = address
 	e.Port = port
 	e.Note = note
+	e.Group = group
 	plain, err := e.Encode()
 	if err != nil {
 		return EntryView{}, err
@@ -380,13 +383,14 @@ func (s *Service) AddFull(title, username, password, address string, port int, n
 		Title:     e.Title,
 		Username:  e.Username,
 		Address:   e.Address,
+		Group:     e.Group,
 		CreatedAt: e.CreatedAt,
 	}, nil
 }
 
 // Update 编辑一条凭据的全部字段并写回库文件。内部验证条目不可编辑；
 // 创建时间与回收站状态保持不变。
-func (s *Service) Update(idHex, title, username, password, address string, port int, note string) (view EntryView, err error) {
+func (s *Service) Update(idHex, title, username, password, address string, port int, note, group string) (view EntryView, err error) {
 	defer func() {
 		if err != nil {
 			s.audit.Log("编辑凭据", "失败")
@@ -415,6 +419,7 @@ func (s *Service) Update(idHex, title, username, password, address string, port 
 	ne.Address = address
 	ne.Port = port
 	ne.Note = note
+	ne.Group = group
 	ne.CreatedAt = old.CreatedAt // 创建时间不变
 	ne.Deleted = old.Deleted     // 回收站状态不变
 	if err := s.resealEntry(id, ne); err != nil {
@@ -426,6 +431,7 @@ func (s *Service) Update(idHex, title, username, password, address string, port 
 		Title:     ne.Title,
 		Username:  ne.Username,
 		Address:   ne.Address,
+		Group:     ne.Group,
 		CreatedAt: ne.CreatedAt,
 		Deleted:   ne.Deleted,
 	}, nil
@@ -450,6 +456,7 @@ func (s *Service) Get(idHex string) (EntryDetail, error) {
 			Title:     e.Title,
 			Username:  e.Username,
 			Address:   e.Address,
+			Group:     e.Group,
 			CreatedAt: e.CreatedAt,
 			Deleted:   e.Deleted,
 		},
@@ -472,13 +479,59 @@ func (s *Service) CopyPassword(idHex string) (err error) {
 	if err != nil {
 		return err
 	}
+	return s.copyWithAutoClear(d.Password)
+}
+
+// CopyField 将指定凭据的非密码字段（标题/账号/地址/端口/备注/分组）复制到剪贴板，
+// 30 秒后自动清空。field 取值：title / username / address / port / note / group。
+func (s *Service) CopyField(idHex, field string) (err error) {
+	label := "复制字段"
+	defer func() {
+		if err != nil {
+			s.audit.Log(label, "失败")
+		} else {
+			s.audit.Log(label, "成功")
+		}
+	}()
+	d, err := s.Get(idHex)
+	if err != nil {
+		return err
+	}
+	var text string
+	switch field {
+	case "title":
+		text = d.Title
+	case "username":
+		text = d.Username
+	case "address":
+		text = d.Address
+	case "port":
+		if d.Port > 0 {
+			text = fmt.Sprintf("%d", d.Port)
+		}
+	case "note":
+		text = d.Note
+	case "group":
+		text = d.Group
+	default:
+		return errors.New("不支持的字段")
+	}
+	if text == "" {
+		return errors.New("该字段为空")
+	}
+	label = "复制" + field
+	return s.copyWithAutoClear(text)
+}
+
+// copyWithAutoClear 写入剪贴板并在 30 秒后清空，避免敏感内容残留
+// （与界面提示一致；仅解锁期间可用）。
+func (s *Service) copyWithAutoClear(text string) error {
 	if s.setClipboard == nil {
 		return errors.New("剪贴板不可用")
 	}
-	if err := s.setClipboard(s.ctx, d.Password); err != nil {
+	if err := s.setClipboard(s.ctx, text); err != nil {
 		return fmt.Errorf("写入剪贴板失败: %w", err)
 	}
-	// 30 秒后自动清空，避免密码残留（与界面提示一致）。
 	time.AfterFunc(30*time.Second, func() {
 		_ = s.setClipboard(s.ctx, "")
 	})

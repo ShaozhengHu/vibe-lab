@@ -24,9 +24,11 @@
 <!-- 解锁 / 创建屏 -->
 <div id="screen-lock" class="screen">
   <div class="lock-card">
-    <div class="logo">密</div>
-    <h1 class="app-title">密码保险箱</h1>
-    <p class="app-sub">国密加密 · 数据仅存本地</p>
+    <div class="lock-brand">
+      <div class="logo">密</div>
+      <h1 class="app-title">密码保险箱</h1>
+      <p class="app-sub">国密加密 · 数据仅存本地</p>
+    </div>
 
     <div id="lock-mode" class="lock-form">
       <label class="lab">主密码</label>
@@ -84,19 +86,38 @@
         <div class="detail-card">
           <div class="field">
             <span class="lab">账号</span>
-            <span id="d-username" class="field-value"></span>
+            <div class="field-row">
+              <span id="d-username" class="field-value"></span>
+              <button class="btn ghost btn-xs copy-btn" data-field="username" type="button">复制</button>
+            </div>
+          </div>
+          <div class="field" id="d-field-group">
+            <span class="lab">分组</span>
+            <div class="field-row">
+              <span id="d-group" class="field-value"></span>
+              <button class="btn ghost btn-xs copy-btn" data-field="group" type="button">复制</button>
+            </div>
           </div>
           <div class="field" id="d-field-address">
             <span class="lab">地址</span>
-            <span id="d-address" class="mono field-value"></span>
+            <div class="field-row">
+              <span id="d-address" class="mono field-value"></span>
+              <button class="btn ghost btn-xs copy-btn" data-field="address" type="button">复制</button>
+            </div>
           </div>
           <div class="field" id="d-field-port">
             <span class="lab">端口</span>
-            <span id="d-port" class="mono field-value"></span>
+            <div class="field-row">
+              <span id="d-port" class="mono field-value"></span>
+              <button class="btn ghost btn-xs copy-btn" data-field="port" type="button">复制</button>
+            </div>
           </div>
           <div class="field" id="d-field-note">
             <span class="lab">备注</span>
-            <span id="d-note" class="field-value"></span>
+            <div class="field-row">
+              <span id="d-note" class="field-value"></span>
+              <button class="btn ghost btn-xs copy-btn" data-field="note" type="button">复制</button>
+            </div>
           </div>
           <div class="field" id="d-field-pass">
             <span class="lab">密码</span>
@@ -130,15 +151,18 @@
     <div class="modal-head" id="add-head">添加凭据<button id="add-close" class="modal-x" type="button">×</button></div>
     <div class="modal-body">
       <label class="lab">标题</label>
-      <input id="add-title" class="inp" type="text" placeholder="例如：生产数据库">
+      <input id="add-title" class="inp" type="text">
       <label class="lab" style="margin-top:12px;">账号</label>
-      <input id="add-username" class="inp" type="text" placeholder="例如：dbadmin">
+      <input id="add-username" class="inp" type="text">
       <label class="lab" style="margin-top:12px;">地址（IP / 域名，可选）</label>
-      <input id="add-address" class="inp" type="text" placeholder="例如：192.168.1.10">
+      <input id="add-address" class="inp" type="text">
       <label class="lab" style="margin-top:12px;">端口（可选）</label>
-      <input id="add-port" class="inp" type="text" inputmode="numeric" placeholder="例如：3306">
+      <input id="add-port" class="inp" type="text" inputmode="numeric">
       <label class="lab" style="margin-top:12px;">备注（可选）</label>
-      <input id="add-note" class="inp" type="text" placeholder="例如：生产环境，禁止随意变更">
+      <input id="add-note" class="inp" type="text">
+      <label class="lab" style="margin-top:12px;">分组（可选）</label>
+      <input id="add-group" class="inp" type="text" list="group-list">
+      <datalist id="group-list"></datalist>
       <label class="lab" style="margin-top:12px;">密码</label>
       <input id="add-password" class="inp" type="password" placeholder="请输入密码">
       <div class="modal-foot">
