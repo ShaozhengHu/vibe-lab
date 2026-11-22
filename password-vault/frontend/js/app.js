@@ -249,8 +249,8 @@ function renderDetail() {
   if (d.port) $('d-port').textContent = d.port;
   $('d-field-note').classList.toggle('hidden', !d.note);
   if (d.note) $('d-note').textContent = d.note;
-  $('d-edit').classList.toggle('hidden', trash);
   var trash = state.view === 'trash';
+  $('d-edit').classList.toggle('hidden', trash);            // 回收站条目不显示编辑（先恢复再编辑）
   $('d-field-pass').classList.toggle('hidden', trash);      // 回收站条目不显示/复制密码
   $('d-ops-trash').classList.toggle('hidden', !trash);      // 回收站操作：恢复/彻底删除
   $('d-delete').classList.toggle('hidden', trash);          // 正常视图操作：删除
